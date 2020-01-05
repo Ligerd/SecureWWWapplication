@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Upload form</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link href="http://fonts.googleapis.com/css?family=Nunito:400,300" rel="stylesheet" type="text/css">
+</head>
+<body>
+<section>
+<form action="{{CDN_HOST}}/upload" method="POST" enctype="multipart/form-data">
+    <h1>Upload form</h1>
+    <div class="form-group">
+       <label>Select image</label>
+       <div class="custom-file">
+           <input type="file" class="custom-file-input" name="file" id="file">
+           <input type="hidden" name="token"  id="token"  value="{{upload_token}}" />
+           <input type="hidden" name="callback" id="callback" value="{{WEB_HOST}}/callback" />
+           <label class="custom-file-label" for="file">Select image... </label>
+       </div>
+    </div>
+    <button type="submit" class="btn btn-primary"> Upload file</button>
+    <a href="{{WEB_HOST}}/logout" id="logout"> Logout</a>
+</form>
+
+     <ul>
+                {% for i in range(allfids|length) %}
+                <li><a href="{{CDN_HOST}}/download/{{allfids[i]}}?token={{download_tokens[i]}}&content_type={{content_type}}">{{filenames[i]}}</a></li>
+                {% endfor %}
+     </ul>
+
+</section>
+</body>
+</html>

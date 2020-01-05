@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  nginx:
+    restart: always
+    build:
+      context: ./nginx-ssl
+      dockerfile: ./Dockerfile
+    command: []
+    depends_on:
+      - flask
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx-uwsgi.conf:/etc/nginx/nginx.conf
+
+  flask: # when changing chaberb/flask to chaberb/uwsgi-flask change also nginx/nginx.conf
+   #image: chaberb/flask
+    restart: always
+    build:
+      context: ./uwsgi-flask
+      dockerfile: ./Dockerfile
+    command: []
+    volumes:
+      - ./auth:/var/www/app
+  client_redis:
+    image: "redis:alpine"
+    command: --port 6381

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Signup form</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link href="http://fonts.googleapis.com/css?family=Nunito:400,300" rel="stylesheet" type="text/css">
+</head>
+<body>
+<form action="{{WEB_HOST}}" method="POST">
+    <h1>Sign form</h1>
+        <label class="" for="login">Login</label>
+        <input type="text" id="login" name="login" value="">
+
+        <label class="" for="password">Password</label>
+        <input type="password" id="password" name="password" value="">
+
+    <button type="submit" id="singin">Sing up</button>
+    <!--<a href="{{WEB_HOST}}/rejestracja" id="registration"> Registration</a>-->
+</form>
+</body>
+</html>
