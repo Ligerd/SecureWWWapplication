@@ -2,3 +2,4 @@ flask
 uwsgi
 redis
 pycrypto
+uuid
