@@ -4,7 +4,7 @@ from flask import make_response,render_template
 from uuid import uuid4
 import redis
 app = Flask(__name__)
-from .chipter import encrypt,decrypt
+from .chipter import encrypt,password_verification
 db = redis.Redis(host='client_redis', port=6381, decode_responses=True)
 
 test=encrypt("admin")
@@ -25,7 +25,7 @@ def auth():
     password = request.form.get('password')
     passwordDB=db.get("users:" + login)
     response = make_response('', 303)
-    if decrypt(passwordDB)==password:
+    if password_verification(passwordDB,password):
         session_id = str(uuid4())
         db.hset("session:" + session_id, "username", login)
         response.set_cookie(SESSION_ID, session_id, max_age=SESSION_TIME)
