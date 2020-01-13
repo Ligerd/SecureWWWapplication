@@ -1,7 +1,6 @@
 version: '3'
 services:
   nginx:
-    restart: always
     build:
       context: ./nginx-ssl
       dockerfile: ./Dockerfile

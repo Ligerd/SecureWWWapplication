@@ -92,3 +92,6 @@ button{
         max-width: 480px;
     }
 }
+textarea{
+  resize: none;
+}

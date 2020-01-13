@@ -3,3 +3,4 @@ uwsgi
 redis
 pycrypto
 uuid
+pyjwt

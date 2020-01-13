@@ -1,3 +1,0 @@
-docker run --rm \
-           -v "$PWD/auth:/var/www/app:ro" -p5000:5000 \
-           flask
