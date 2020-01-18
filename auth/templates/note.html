@@ -14,10 +14,10 @@
     <div class="form-group">
        <label>It's your note :)</label>
           <p><b>Note Shortcut</b><br>
-              <input type="text" size="40" name="shortcut" id="shortcut" value="{{shortcut}}">
+              <textarea  resize=none name="note" cols="40" rows="3" disabled >{{shortcut}}</textarea>
           </p>
        <div class="custom-notes">
-           <p>Notes<Br><textarea  resize=none name="note" cols="40" rows="3" id="note" >{{note}}</textarea></p>
+           <p>Notes<Br><textarea  resize=none name="note" cols="40" rows="3" id="note" disabled >{{note}}</textarea></p>
        </div>
     </div>
     <button type="submit" class="btn btn-primary">Back to notes</button>

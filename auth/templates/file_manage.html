@@ -21,7 +21,14 @@
            <input type="hidden" name="token"  id="token"  value="{{upload_token}}"/>
            <input type="hidden" name="callback" id="callback" value="/callback"/>
        </div>
+     <label>Access:</label>
+      <input type="radio" name="access" value="public" required id="option1">
+      <label class="light" for="public" id="public">Public</label>
+
+      <input type="radio" name="access" value="private" id="option2">
+      <label class="light" for="private" id="private">Private</label>
     </div>
+
     <button type="submit" class="btn btn-primary"> Upload notes</button>
 
      <form>
@@ -34,7 +41,7 @@
 
      <ul>
                 {% for i in range(allfids|length) %}
-                <li><a href="/download/{{allfids[i]}}?token={{download_tokens[i]}}&content_type={{content_type}}">{{filenames[i]}}</a></li>
+                <li><label><a href="/download/{{allfids[i]}}?token={{download_tokens[i]}}&content_type={{content_type}}">{{filenames[i]}}</a> {{types[i]}}</label></li>
                 {% endfor %}
      </ul>
 

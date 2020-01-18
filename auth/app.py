@@ -5,7 +5,7 @@ from uuid import uuid4
 import redis
 from jwt import encode,decode, InvalidTokenError
 app = Flask(__name__)
-from .chipter import encrypt,password_verification
+from .chipter import encrypt,password_verification,fild_verification
 from .service.user_service import UserService
 from .request.user_request import UserRequest
 from .service.note_service import NoteService
@@ -18,6 +18,9 @@ user_servise=UserService()
 note_servise=NoteService()
 test=encrypt("admin")
 user_servise.addTestUser("admin",test)
+
+test=encrypt("test")
+user_servise.addTestUser("test",test)
 
 SESSION_ID = "session-id"
 SESSION_TIME = 180
@@ -36,6 +39,21 @@ def auth():
     user_req = UserRequest(request)
     response = make_response('', 303)
     user=user_servise.find_by_login(user_req.login)
+
+    user_check=fild_verification(user_req.login)
+    passord_check=fild_verification(user_req.password)
+    if user_check!=True:
+        response.headers["Location"] = "/error/" + "Login contains an illegal character " + user_check
+        return response
+    if passord_check!=True:
+        response.headers["Location"] = "/error/" + "Password contains an illegal character " + passord_check
+        return response
+    if len(user_req.login)>18:
+        response.headers["Location"] = "/error/" + "Too many characters entered in the login field " + str(len(user_req.login))
+        return response
+    if len(user_req.password)>18:
+        response.headers["Location"] = "/error/" + "Too many characters entered in the password field " + str(len(user_req.password))
+        return response
     if user!=None:
         if password_verification(user.password,user_req.password):
             session_id = str(uuid4())
@@ -45,11 +63,11 @@ def auth():
             return response
         else:
             response.set_cookie(SESSION_ID, "INVALIDATE", max_age=INVALIDATE)
-            response.headers["Location"] = "/error"
+            response.headers["Location"] = "/error/" + "Wrong password"
             return response
     else:
         response.set_cookie(SESSION_ID, "INVALIDATE", max_age=INVALIDATE)
-        response.headers["Location"] = "/error"
+        response.headers["Location"] = "/error/"+"Wrong login"
         return response
 
 @app.route('/note_manage',methods=['GET','POST'])
@@ -58,24 +76,33 @@ def note_manage():
     if session_id:
         content_type="text/plain"
         login = db.hget("session:" + session_id, "username")
-        allfids= db.hvals("notes:"+login)
-        print(allfids)
+        user=user_servise.find_by_login(login)
+        allfids= db.hvals("notes")
         download_tokens=[]
         notes=[]
-        for fidx in allfids:
-            download_tokens.append(create_download_token(fidx).decode())
-            notes.append(db.hget("shortcut:"+login,fidx))
+        fids=[]
+        types=[]
+        for fid in allfids:
+            note=note_servise.find_by_fid(fid)
+            if note.access==None:
+                download_tokens.append(create_download_token(fid).decode())
+                notes.append(note.shortcut)
+                fids.append(fid)
+                types.append("Public Note")
+            elif note.access==user.id:
+                download_tokens.append(create_download_token(fid).decode())
+                notes.append(note.shortcut)
+                fids.append(fid)
+                types.append("Private Note")
         upload_token = create_upload_token().decode('ascii')
-        return render_template("file_manage.html",allfids=allfids,content_type=content_type,upload_token=upload_token,download_tokens=download_tokens,filenames=notes)
+        return render_template("file_manage.html",allfids=fids,content_type=content_type,upload_token=upload_token,download_tokens=download_tokens,filenames=notes,types=types)
     return my_redirect("/")
-
-app.config["ALLOWED_FORMAT"]=["PDF"]
 
 
 
 @app.route("/upload",methods=["POST"])
 def upload_note():
-    print(request.form.get('shortcut'))
+    access=request.form['access']
     note_req = NoteRequest(request)
     t = request.form.get('token')
     c = request.form.get('callback')
@@ -90,7 +117,7 @@ def upload_note():
     login=db.hget("session:" + session_id, "username")
     user=user_servise.find_by_login(login)
     fid, content_type = str(uuid4()),"text/plain"
-    shortcat=note_servise.saveNote(note_req,user.id,fid)
+    shortcat=note_servise.saveNote(note_req,user.id,fid,access)
     return redirect(f"{c}?fid={fid}&content_type={content_type}&shortcat={shortcat}") if c \
         else (f'<h1>CDN</h1> Uploaded {fid}', 200)
 
@@ -113,8 +140,8 @@ def uploaded():
     new_fied_prefix = str(db.incr(JWT_SECREATE_DATABASE))
     new_fied= new_fied_prefix + fid
     login = db.hget("session:"+session_id,"username")
-    db.hset("notes:"+login,new_fied, fid)
-    db.hset("shortcut:"+login,fid,shortcat)
+    db.hset("notes",new_fied, fid)
+    #db.hset("shortcut:"+login,fid,shortcat)
     return my_redirect("/note_manage")
 
 
@@ -140,9 +167,9 @@ def logout():
     response.headers["Location"] = "/"
     return response
 
-@app.route('/error',methods=['GET'])
-def wrong():
-    return render_template('error.html')
+@app.route('/error/<messege>',methods=['GET'])
+def wrong(messege):
+    return render_template('error.html',messege=messege)
 
 def create_download_token(fid):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
