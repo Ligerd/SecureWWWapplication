@@ -11,7 +11,7 @@ from .request.user_request import UserRequest
 from .service.note_service import NoteService
 from .request.note_request import NoteRequest
 import datetime
-
+from .exception.exception import ToLongString,InvalidChar
 db = redis.Redis(host='client_redis', port=6381, decode_responses=True)
 
 user_servise=UserService()
@@ -73,10 +73,10 @@ def auth():
 @app.route('/note_manage',methods=['GET','POST'])
 def note_manage():
     session_id = request.cookies.get(SESSION_ID)
-    if session_id:
+    login = db.hget("session:" + session_id, "username")
+    user = user_servise.find_by_login(login)
+    if user!=None:
         content_type="text/plain"
-        login = db.hget("session:" + session_id, "username")
-        user=user_servise.find_by_login(login)
         allfids= db.hvals("notes")
         download_tokens=[]
         notes=[]
@@ -116,8 +116,18 @@ def upload_note():
     session_id = request.cookies.get(SESSION_ID)
     login=db.hget("session:" + session_id, "username")
     user=user_servise.find_by_login(login)
+    if user==None:
+        return redirect('/')
     fid, content_type = str(uuid4()),"text/plain"
-    shortcat=note_servise.saveNote(note_req,user.id,fid,access)
+    response=make_response('',303)
+    try:
+        shortcat=note_servise.saveNote(note_req,user.id,fid,access)
+    except ToLongString as e:
+        response.headers["Location"] = "/note_error/" + str(e)
+        return response
+    except InvalidChar as e:
+        response.headers["Location"] = "/note_error/" + str(e)
+        return response
     return redirect(f"{c}?fid={fid}&content_type={content_type}&shortcat={shortcat}") if c \
         else (f'<h1>CDN</h1> Uploaded {fid}', 200)
 
@@ -170,6 +180,10 @@ def logout():
 @app.route('/error/<messege>',methods=['GET'])
 def wrong(messege):
     return render_template('error.html',messege=messege)
+
+@app.route('/note_error/<messege>',methods=['GET'])
+def wrong_note(messege):
+    return render_template('note_error.html',messege=messege)
 
 def create_download_token(fid):
     exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_SESSION_TIME)
